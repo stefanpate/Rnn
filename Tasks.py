@@ -113,3 +113,32 @@ def two_input_flip_flop(input_one, input_two, trial_len, null_time, n_inputs, ba
 	z[:,t_1:t_2,:] = target_one
 	z[:,t_2:,:] = target_two
 	return u, z
+
+def draw(file_path, n_outputs, n_inputs=1):
+	'''
+	v0 draw task. Load file from file_path. Use as target. No input
+	'''
+
+	target = np.loadtxt(file_path, delimiter=',')
+	
+	if len(target.shape) == 2:
+		target = target.T
+	elif len(target.shape) == 1:
+		target = target.reshape(1,-1)
+	
+	input = np.zeros(shape=(n_inputs, target.shape[1]))
+
+	return input, target
+
+def sine():
+	'''
+	Simple sine wave, 0 input.
+	'''
+	start = np.zeros((1, 200))
+	end = np.zeros((1, 300))
+	t = np.linspace(0, 2 * np.pi * 6, 500)
+	sine = np.sin(t).reshape(1, -1)
+	input = np.concatenate([start, sine, end], axis=1)
+	target = input
+
+	return input, target

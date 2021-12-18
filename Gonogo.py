@@ -26,10 +26,10 @@ Settings
 9. Which GPU to use or None for CPU (gpu_no)
 10. Fraction of selected GPU to use (memory_fraction)
 Example command:
-python Gonogo.py 200 0.8 0.2 1 True True False 20 4 0.2
+python Gonogo.py 200 0.8 0.2 1 True True False 22 0 0.9
 '''
 # Model settings
-taus_trainable = True # Allow taus to be trainable
+taus_trainable = False # Allow taus to be trainable
 
 if taus_trainable:
 	rnn = ModelT.rnn # Which model; w/ trainable taus is ModelT.rnn; w/ fixed taus is Model.rnn
@@ -38,7 +38,7 @@ else:
 
 n_units = int(sys.argv[1])
 p_con = float(sys.argv[2])
-dale = True # Impose Dale's law
+dale = False # Impose Dale's law
 
 if dale:
 	p_inh = float(sys.argv[3])
@@ -48,19 +48,19 @@ else:
 g = 1.5
 taus = [4, 20] # Taus range in timesteps. 1 timestep = 5 ms
 seed = int(sys.argv[8])
-activation_fcn = "linear" # "tanh" / "sigmoid" / "linear"
+activation_fcn = "tanh" # "tanh" / "sigmoid" / "linear"
 
 # Task settings
 n_inputs = int(sys.argv[4])
 n_outputs = int(sys.argv[4])
-trial_len = 200 # Timesteps
+trial_len = 86 # Timesteps
 stim_on = 50
 stim_off = 75
-prob_pulse = 0.5
+prob_pulse = 1.0
 
 # Training settings
 alpha = 1e-3
-batch_size = 64
+batch_size = 1
 optimizer = tf.keras.optimizers.Adam(learning_rate=alpha, name="adam") # INPUT MANUALLY TO hyperparams
 max_ep = 20000
 n_losses = 50 # Number episode losses to average over in evaluating performance criteria
@@ -114,7 +114,8 @@ if dotrain:
 	last_n_losses = [] # Keep last n losses in here
 	saved_losses = [] # Save losses here
 	while (ep < max_ep) & (not met_threshold): # Go till performance threshold met
-		u, z = tasks.gonogo(trial_len, stim_on, stim_off, n_inputs, n_outputs, prob_pulse, batch_size=batch_size) # Get stim, target
+		# u, z = tasks.gonogo(trial_len, stim_on, stim_off, n_inputs, n_outputs, prob_pulse, batch_size=batch_size) # Get stim, target
+		u, z = tasks.sine(trial_len)
 		loss = network.train(u, z, trial_len, optimizer, batch_size) # Call training step
 		last_n_losses.append(loss)
 		
@@ -157,9 +158,12 @@ if dotest:
 	syncur_list = []
 
 	for i in range(test_eps):
-		u, z = tasks.gonogo(trial_len, stim_on, stim_off, n_inputs, n_outputs, prob_pulse, batch_size=1) # Get stim, target
+		# u, z = tasks.gonogo(trial_len, stim_on, stim_off, n_inputs, n_outputs, prob_pulse, batch_size=1) # Get stim, target
+		u, z = tasks.sine(trial_len)
 		output, syncur = network.simulate(u, trial_len)
 		output, syncur = output.numpy(), syncur.numpy()
+		output = output.reshape(output.shape[0], output.shape[1] * output.shape[2])
+		syncur = syncur.reshape(syncur.shape[0], syncur.shape[1] * syncur.shape[2])
 		output_list.append(output)
 		syncur_list.append(syncur)
 		u_list.append(u.reshape(n_inputs, trial_len))
